@@ -36,20 +36,15 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 
     try
     {
-        string insertTelephoneQuery = @"INSERT INTO TELEPHONE
-                                   (
-                                    TYPE,
-                                    DDD,
-                                    TELEPHONENUMBER
-                                   ) VALUES (
-                                    @TYPE,
-                                    @DDD,
-                                    @TELEPHONENUMBER
-                                   );
-                                   SELECT SCOPE_IDENTITY();";
+        string inserTelephoneQuery = @"INSERT INTO TELEPHONE
+                                       (TYPE, DDD, TELEPHONENUMBER)
+                                       VALUES
+                                       (@TYPE, @DDD, @TELEPHONENUMBER);
+                                       SELECT SCOPE_IDENTITY();";
 
         int telephoneId;
-        using (SqlCommand command = new SqlCommand(insertTelephoneQuery, connection, transaction))
+
+        using (SqlCommand command = new SqlCommand(inserTelephoneQuery, connection, transaction))
         {
             command.Parameters.AddWithValue("@TYPE", contact.Telephone.Type);
             command.Parameters.AddWithValue("@DDD", contact.Telephone.Ddd);
@@ -58,20 +53,12 @@ using (SqlConnection connection = new SqlConnection(connectionString))
             telephoneId = Convert.ToInt32(command.ExecuteScalar());
         }
 
-        string InsertQuery = @"INSERT INTO CONTACT
-                          (
-                           FIRSTNAME,
-                           LASTNAME,
-                           EMAIL,
-                           TELEPHONEID
-                          ) VALUES (
-                           @FIRSTNAME,
-                           @LASTNAME,
-                           @EMAIL,
-                           @TELEPHONEID
-                          )";
+        string insertContactQuery = @"INSERT INTO CONTACT
+                                      (FIRSTNAME, LASTNAME, EMAIL, TELEPHONEID)
+                                      VALUES
+                                      (@FIRSTNAME, @LASTNAME, @EMAIL, @TELEPHONEID);";
 
-        using (SqlCommand command = new(InsertQuery, connection, transaction))
+        using (SqlCommand command = new SqlCommand(insertContactQuery, connection, transaction))
         {
             command.Parameters.AddWithValue("@FIRSTNAME", contact.FirstName);
             command.Parameters.AddWithValue("@LASTNAME", contact.LastName);
@@ -83,22 +70,31 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 
         transaction.Commit();
 
+        Console.WriteLine("Dados inseridos com sucesso!");
+        Console.ReadLine();
+
         Console.Clear();
 
-        string selectQuery = "SELECT * FROM CONTACT";
+        string selectQuery = @"SELECT CONTACT.ID, CONTACT.FIRSTNAME, CONTACT.LASTNAME, CONTACT.EMAIL, TELEPHONE.TYPE, TELEPHONE.DDD, TELEPHONE.TELEPHONENUMBER
+                               FROM CONTACT
+                               INNER JOIN TELEPHONE ON
+                               CONTACT.TELEPHONEID = TELEPHONE.ID";
 
-        using (SqlCommand command = new(selectQuery, connection))
+        using (SqlCommand command = new SqlCommand(selectQuery, connection))
         {
             using (SqlDataReader reader = command.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    Console.WriteLine($"ID: {reader["ID"]}");
-                    Console.WriteLine($"Primeiro Nome: {reader["FIRSTNAME"]}");
-                    Console.WriteLine($"Último Nome: {reader["LASTNAME"]}");
-                    Console.WriteLine($"Email: {reader["EMAIL"]}");
-                    Console.WriteLine($"TelephoneId: {reader["TELEPHONEID"]}");
+                    Console.WriteLine($"Id: {reader["ID"]}\n" +
+                        $"Primeiro Nome: {reader["FIRSTNAME"]}\n" +
+                        $"Último Nome: {reader["LASTNAME"]}\n" +
+                        $"Email: {reader["EMAIL"]}\n" +
+                        $"TIPO DE CONTATO: {reader["TYPE"]}\n" +
+                        $"DDD: {reader["DDD"]}\n" +
+                        $"Número de Telefone: {reader["TELEPHONENUMBER"]}");
                     Console.WriteLine();
+                    Console.ReadLine();
                 }
             }
         }
